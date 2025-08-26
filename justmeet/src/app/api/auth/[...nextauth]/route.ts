@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import { compare } from "bcryptjs"
 import { redis } from "@/lib/redis"
+import type { Role } from "@prisma/client"
 
 export const authOptions = {
   providers: [
@@ -28,12 +29,24 @@ export const authOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role,
         }
       },
     }),
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) (token as { role?: Role }).role = (user as { role: Role }).role
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user)
+        (session.user as { role?: Role }).role = (token as { role?: Role }).role
+      return session
+    },
+  },
   events: {
     async signIn() {
       await redis.incr("sessions:active")
