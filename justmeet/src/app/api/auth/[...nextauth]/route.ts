@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import { compare } from "bcryptjs"
+import { redis } from "@/lib/redis"
 
 export const authOptions = {
   providers: [
@@ -33,6 +34,14 @@ export const authOptions = {
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
+  events: {
+    async signIn() {
+      await redis.incr("sessions:active")
+    },
+    async signOut() {
+      await redis.decr("sessions:active")
+    },
+  },
 }
 
 const handler = NextAuth(authOptions)
