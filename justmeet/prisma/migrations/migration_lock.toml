@@ -1,0 +1,2 @@
+# This file was generated to track the used Prisma provider.
+provider = "postgresql"
