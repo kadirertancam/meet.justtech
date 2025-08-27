@@ -1,11 +1,20 @@
-import { create } from 'zustand'
+import { create } from "zustand"
 
-interface BearState {
-  bears: number
-  increase: () => void
+interface WalletState {
+  balance: number
+  fetchBalance: () => Promise<void>
 }
 
-export const useBearStore = create<BearState>((set) => ({
-  bears: 0,
-  increase: () => set((state) => ({ bears: state.bears + 1 })),
+export const useWalletStore = create<WalletState>((set) => ({
+  balance: 0,
+  async fetchBalance() {
+    try {
+      const res = await fetch("/api/wallet", { cache: "no-store" })
+      if (!res.ok) return
+      const data: { balance: number } = await res.json()
+      set({ balance: data.balance })
+    } catch {
+      // ignore
+    }
+  },
 }))
